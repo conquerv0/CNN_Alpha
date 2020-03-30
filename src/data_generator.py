@@ -56,6 +56,7 @@ class DataGenerator:
             print(text)
 
     def download_stock_data(self):
+        #下载股票数据，使用api待定。
         path_to_company_data = self.data_path
         print("path to company data:", path_to_company_data)
         parent_path = os.sep.join(path_to_company_data.split(os.sep)[:-1])
