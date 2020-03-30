@@ -156,7 +156,7 @@ class DataGenerator:
         """
         labels data based on price rise on next day
           next_day - prev_day
-        以下一天的价格增长为资产标价。
+        以下一天的价格增长为资产标示。
         ((s - s.shift()) > 0).astype(np.int)
         """
 
@@ -169,7 +169,7 @@ class DataGenerator:
         strategy as described at "https://decodingmarkets.com/mean-reversion-trading-strategy"
 
         Label code : BUY => 1, SELL => 0, HOLD => 2
-
+        以均值回归策略为核心计算多空持信号。
         params :
             df => Dataframe with data
             col_name => name of column which should be used to determine strategy
