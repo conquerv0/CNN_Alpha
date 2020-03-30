@@ -206,6 +206,7 @@ class DataGenerator:
         if short = 30 and long = 90,
         Buy when 30 day MA < 90 day MA
         Sell when 30 day MA > 90 day MA
+        以长短（90-30）均线穿越策略计算多空持信号。
 
         Label code : BUY => 1, SELL => 0, HOLD => 2
 
