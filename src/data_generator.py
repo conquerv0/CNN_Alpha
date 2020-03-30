@@ -26,6 +26,7 @@ from utils import *
 
 
 class DataGenerator:
+    # 数据生成器
     def __init__(self, company_code, data_path='./stock_history', output_path='./outputs', strategy_type='original',
                  update=False, logger: Logger = None):
         self.company_code = company_code
@@ -69,6 +70,7 @@ class DataGenerator:
             self.log("Data for " + self.company_code + " ready to use")
 
     def calculate_technical_indicators(self, df, col_name, intervals):
+        # 通过16个技术分析工具进行多空持信号计算。
         # get_RSI(df, col_name, intervals)  # faster but non-smoothed RSI
         get_RSI_smooth(df, col_name, intervals)  # momentum
         get_williamR(df, col_name, intervals)  # momentum
