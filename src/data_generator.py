@@ -156,6 +156,7 @@ class DataGenerator:
         """
         labels data based on price rise on next day
           next_day - prev_day
+        以下一天的价格增长为资产标价。
         ((s - s.shift()) > 0).astype(np.int)
         """
 
