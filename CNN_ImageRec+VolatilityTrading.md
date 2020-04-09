@@ -62,20 +62,20 @@ x轴是开盘前1小时的平均波动率，y轴是开盘后5分钟的平均波�
 
 统计数据上整体有所改善，但仍然不行，这里所有的线性回归都使用statsmodel库中的OLS。
 
-import statsmodels.api as sm
+    import statsmodels.api as sm
 
-def lingres(X, y, title=''):
-    X_test = X[900:]
-    y_test = y[900:]
-    X = X[:700]
-    y = y[:700]
-    
-    model = sm.OLS(y, X).fit()
-    predictions = model.predict(X)
-    plot_out(y, predictions, title + ' Train')
-    predictions = model.predict(X_test)
-    plot_out(y_test, predictions, title + ' Test')
-    return model
+    def lingres(X, y, title=''):
+        X_test = X[900:]
+        y_test = y[900:]
+        X = X[:700]
+        y = y[:700]
+
+        model = sm.OLS(y, X).fit()
+        predictions = model.predict(X)
+        plot_out(y, predictions, title + ' Train')
+        predictions = model.predict(X_test)
+        plot_out(y_test, predictions, title + ' Test')
+        return model
 
 ▌方法2：梯度提升法
 
@@ -83,28 +83,28 @@ def lingres(X, y, title=''):
 
 这里我们使用LightGBM，输入到模型中的特征本质上与多元回归相同。
 
-from lightgbm import LGBMRegressor
-from sklearn.model_selection import cross_validate
+    from lightgbm import LGBMRegressor
+    from sklearn.model_selection import cross_validate
 
-regr = LGBMRegressor()
-scores = cross_validate(regr, X, y, cv=5, scoring=['neg_mean_squared_error', 'r2'])
-scores
-#{'fit_time': array([0.242456, 0.243822, 0.285033, 0.266963, 0.213427]),
-# 'score_time': array([0.003387, 0.003706, 0.004177, 0.003168, 0.003078]),
-# 'test_neg_mean_squared_error': array([ -3.989691, -1.751312, -1.646064, -2.936831, -11.072056]),
-# 'test_r2': array([0.473771, 0.327672, 0.443433, 0.042896, 0.609157])}
+    regr = LGBMRegressor()
+    scores = cross_validate(regr, X, y, cv=5, scoring=['neg_mean_squared_error', 'r2'])
+    scores
+    #{'fit_time': array([0.242456, 0.243822, 0.285033, 0.266963, 0.213427]),
+    # 'score_time': array([0.003387, 0.003706, 0.004177, 0.003168, 0.003078]),
+    # 'test_neg_mean_squared_error': array([ -3.989691, -1.751312, -1.646064, -2.936831, -11.072056]),
+    # 'test_r2': array([0.473771, 0.327672, 0.443433, 0.042896, 0.609157])}
 
 通过5种不同的交叉验证评估，该模型在我们数据样本的不同切面上表现不是很稳定，这表明在我们的数据在不同部分存在某种不平衡的离群样本。尽管当我们更深入地研究预测过程时，这可能是一个问题，但就本文而言，只要我们有相同的训练、验证和测试集，我们就不需要过多担心，因为这是我们的第一次尝试。
 
 如前所述，我们需要在不同的方法中保持样本的一致性，因此我们只训练前700个样本，并预测样本900+个样本 。
 
-train_index = [x for x in range(700)]
-test_index = [x for x in range(900, 1070)]
-X_train, X_test = X[train_index], X[test_index]
-y_train, y_test = y[train_index], y[test_index]
-regr.fit(X_train, y_train)
-y_hat = regr.predict(X_test)
-y_train_hat = regr.predict(X_train)
+    train_index = [x for x in range(700)]
+    test_index = [x for x in range(900, 1070)]
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+    regr.fit(X_train, y_train)
+    y_hat = regr.predict(X_test)
+    y_train_hat = regr.predict(X_train)
 
 训练集和测试集结果：
 
@@ -123,19 +123,19 @@ https://www.fast.ai/
 
 我们使用与LightGBM相同的输入和输出集，并将数据输入到2个隐层的MLP网络中，每个隐层有300个神经元。
 
-from fastai.tabular import *
+    from fastai.tabular import *
 
-dep_var = 'target'
-y.name = dep_var
-mlp_df = pd.concat([X, y], axis=1)
-procs = [Normalize]
+    dep_var = 'target'
+    y.name = dep_var
+    mlp_df = pd.concat([X, y], axis=1)
+    procs = [Normalize]
 
-data = TabularDataBunch.from_df('.', mlp_df.iloc[:900], dep_var, valid_idx=range(700, 900), procs=procs)
-learn = tabular_learner(data, layers=[300,300], loss_func=mse, metrics=[r2_score, explained_variance])
+    data = TabularDataBunch.from_df('.', mlp_df.iloc[:900], dep_var, valid_idx=range(700, 900), procs=procs)
+    learn = tabular_learner(data, layers=[300,300], loss_func=mse, metrics=[r2_score, explained_variance])
 
-learn.lr_find(start_lr=1e-6, num_it=50, end_lr=1e-1)
-learn.recorder.plot()
-learn.fit_one_cycle(3, slice(3e-4), wd=0.2) 
+    learn.lr_find(start_lr=1e-6, num_it=50, end_lr=1e-1)
+    learn.recorder.plot()
+    learn.fit_one_cycle(3, slice(3e-4), wd=0.2) 
 
 经过几次迭代训练，我们可以得到类似这样的预测结果。
 
@@ -155,10 +155,10 @@ learn.fit_one_cycle(3, slice(3e-4), wd=0.2)
 
 注：由于在除法计算后出现了巨大的峰值，所以波动率上限为30，如下所示：
 
-Raw vol_after / vol_before
+    Raw vol_after / vol_before
 
 
-Capped@30 vol_after / vol_before
+    Capped@30 vol_after / vol_before
 
 与原始值的预测相比，MLP的间接预测结果略差，但差别不大。现在我们有了CNN网络可以比较的基准。
 
@@ -171,55 +171,55 @@ https://arxiv.org/pdf/1506.00327.pdf
 
 在下面的代码中，其每天创建一个图像，每个图像描述开盘前60分钟的波动率。
 
-from pyts.image import GramianAngularField
-from matplotlib import pyplot as plt
+    from pyts.image import GramianAngularField
+    from matplotlib import pyplot as plt
 
-from multiprocessing import Pool, cpu_count
+    from multiprocessing import Pool, cpu_count
 
-gadf = GramianAngularField(image_size=60, method='difference')
-X_gadf = gadf.fit_transform(X)
+    gadf = GramianAngularField(image_size=60, method='difference')
+    X_gadf = gadf.fit_transform(X)
 
-def convert_img(idx):
-    fig = plt.figure()
-    ax = plt.subplot(111)
-    try:
-        fname = f'imgs/{idx}.png'
-        if os.path.exists(fname):
+    def convert_img(idx):
+        fig = plt.figure()
+        ax = plt.subplot(111)
+        try:
+            fname = f'imgs/{idx}.png'
+            if os.path.exists(fname):
+                return
+        except:
             return
-    except:
-        return
-    ax.imshow(X_gadf[idx], cmap='rainbow', origin='lower')
-    ax.set_title('')
-    ax.set_xticks([])
-    ax.set_yticks([])
-    fig.savefig(fname, bbox_inches='tight')
-    
-p = Pool(cpu_count())
-_ = p.map(convert_img, (i for i in range(1070)))
+        ax.imshow(X_gadf[idx], cmap='rainbow', origin='lower')
+        ax.set_title('')
+        ax.set_xticks([])
+        ax.set_yticks([])
+        fig.savefig(fname, bbox_inches='tight')
+
+    p = Pool(cpu_count())
+    _ = p.map(convert_img, (i for i in range(1070)))
 
 对于CNN网络来说，它本质上是使用ResNET34作为底层，然后在顶部加上一个[1024,512]稠密层，并使用一个简单的线性激活节点执行最终的回归。
 
-data = (ImageList.from_csv('imgs', 'labels.csv')
-                 .split_by_idxs(list(range(700)), list(range(700, 900)))
-                 .label_from_df()
-                 .databunch())
+    data = (ImageList.from_csv('imgs', 'labels.csv')
+                     .split_by_idxs(list(range(700)), list(range(700, 900)))
+                     .label_from_df()
+                     .databunch())
 
-learner = cnn_learner(data, models.resnet34, loss_func=mae, metrics=[r2_score])
-learner.model[1]
-# Sequential(
-# (0): AdaptiveConcatPool2d(
-# (ap): AdaptiveAvgPool2d(output_size=1)
-# (mp): AdaptiveMaxPool2d(output_size=1)
-# )
-# (1): Flatten()
-# (2): BatchNorm1d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-# (3): Dropout(p=0.25, inplace=False)
-# (4): Linear(in_features=1024, out_features=512, bias=True)
-# (5): ReLU(inplace=True)
-# (6): BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-# (7): Dropout(p=0.5, inplace=False)
-# (8): Linear(in_features=512, out_features=1, bias=True)
-# )
+    learner = cnn_learner(data, models.resnet34, loss_func=mae, metrics=[r2_score])
+    learner.model[1]
+    # Sequential(
+    # (0): AdaptiveConcatPool2d(
+    # (ap): AdaptiveAvgPool2d(output_size=1)
+    # (mp): AdaptiveMaxPool2d(output_size=1)
+    # )
+    # (1): Flatten()
+    # (2): BatchNorm1d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    # (3): Dropout(p=0.25, inplace=False)
+    # (4): Linear(in_features=1024, out_features=512, bias=True)
+    # (5): ReLU(inplace=True)
+    # (6): BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    # (7): Dropout(p=0.5, inplace=False)
+    # (8): Linear(in_features=512, out_features=1, bias=True)
+    # )
 
 经过反复的训练，我们得到了这样的结果：
 
